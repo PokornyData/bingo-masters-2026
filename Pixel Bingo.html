@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bingo Masters 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg-0: #0a0b22;
+    --bg-1: #14163a;
+    --bg-2: #1d2050;
+    --panel: #242765;
+    --panel-light: #353a8c;
+    --frame: #4a4fbf;
+    --frame-dark: #1f2059;
+    --ink: #f4e9d8;
+    --ink-dim: #a8a2c4;
+    --gold: #fbbf24;
+    --won: #7CFFB2;
+    --won-bg: #1e4f33;
+    --lost: #ff6b6b;
+    --lost-bg: #4f1e1e;
+    --pending: #f5d76e;
+    --pending-bg: #2a2a4a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg-0); color: var(--ink); font-family: "VT323", monospace; -webkit-font-smoothing: none; font-smooth: never; }
+  button { font-family: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+  img { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(75, 80, 200, 0.25), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 4px),
+      linear-gradient(180deg, #0a0b22 0%, #050614 100%);
+    background-attachment: fixed;
+  }
+
+  /* ---------- LAYOUT ---------- */
+  .app {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  /* ---------- TOPBAR ---------- */
+  .topbar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: stretch;
+  }
+  .title-block {
+    background: var(--bg-1);
+    padding: 22px 28px;
+    border: 4px solid var(--frame);
+    box-shadow:
+      0 0 0 4px var(--frame-dark),
+      6px 6px 0 4px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+  .title-block::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(255,255,255,0.02) 8px 9px);
+    pointer-events: none;
+  }
+  .title-glow {
+    font-family: "Press Start 2P", monospace;
+    font-size: 28px;
+    color: var(--gold);
+    text-shadow:
+      3px 3px 0 #b45309,
+      6px 6px 0 rgba(0,0,0,0.8),
+      0 0 18px rgba(251, 191, 36, 0.5);
+    letter-spacing: 1px;
+  }
+  .subtitle {
+    font-size: 22px;
+    color: var(--ink-dim);
+    margin-top: 8px;
+    letter-spacing: 2px;
+  }
+
+  .leaderboard {
+    background: var(--bg-1);
+    border: 4px solid var(--frame);
+    box-shadow:
+      0 0 0 4px var(--frame-dark),
+      6px 6px 0 4px rgba(0,0,0,0.5);
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 280px;
+  }
+  .lb-row {
+    display: grid;
+    grid-template-columns: 36px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    font-size: 22px;
+    padding: 4px 6px;
+  }
+  .lb-row.gold {
+    background: rgba(251, 191, 36, 0.12);
+    border-left: 4px solid var(--gold);
+    padding-left: 10px;
+  }
+  .lb-rank {
+    font-family: "Press Start 2P", monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+  }
+  .lb-row.gold .lb-rank { color: var(--gold); }
+  .lb-pct {
+    font-family: "Press Start 2P", monospace;
+    font-size: 12px;
+    color: var(--ink);
+  }
+
+  /* ---------- CHARACTER SELECT ---------- */
+  .character-select {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .portrait-card {
+    background: var(--bg-1);
+    border: 4px solid var(--frame);
+    box-shadow:
+      0 0 0 4px var(--frame-dark),
+      6px 6px 0 4px rgba(0,0,0,0.5);
+    padding: 12px 12px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    transition: transform 0.06s;
+    text-align: center;
+  }
+  .portrait-card:hover { transform: translate(-2px, -2px); }
+  .portrait-card:active { transform: translate(0, 0); }
+  .portrait-card.selected {
+    background: var(--bg-2);
+    border-color: var(--accent);
+    box-shadow:
+      0 0 0 4px var(--frame-dark),
+      0 0 0 8px var(--accent),
+      0 0 28px var(--accent);
+  }
+  .portrait-rank {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-family: "Press Start 2P", monospace;
+    font-size: 10px;
+    color: var(--ink-dim);
+    background: var(--frame-dark);
+    padding: 4px 6px;
+    border: 2px solid var(--frame);
+  }
+  .portrait-card.selected .portrait-rank { color: var(--accent); border-color: var(--accent); }
+  .portrait-frame {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #000;
+    border: 3px solid var(--frame);
+    overflow: hidden;
+  }
+  .portrait-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+  }
+  .portrait-name {
+    font-family: "Press Start 2P", monospace;
+    font-size: 14px;
+    color: var(--accent);
+    margin-top: 4px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.6);
+  }
+  .portrait-pct {
+    font-family: "Press Start 2P", monospace;
+    font-size: 20px;
+    color: var(--ink);
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.6);
+  }
+  .portrait-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 20px;
+    align-items: center;
+  }
+  .dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    margin-right: 3px;
+    border: 1px solid rgba(0,0,0,0.6);
+  }
+  .dot.won { background: var(--won); }
+  .dot.lost { background: var(--lost); }
+  .dot.pending { background: var(--pending); }
+
+  /* ---------- CARD STAGE ---------- */
+  .card-stage {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+
+  .player-side {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .big-portrait {
+    background: var(--bg-1);
+    border: 4px solid var(--accent);
+    box-shadow:
+      0 0 0 4px var(--frame-dark),
+      6px 6px 0 4px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+  .big-portrait img {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    object-position: center 20%;
+    display: block;
+  }
+  .player-banner {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 70%, transparent 100%);
+    font-family: "Press Start 2P", monospace;
+    font-size: 20px;
+    color: var(--accent);
+    padding: 26px 12px 10px;
+    text-align: center;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.9);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat-pill {
+    background: var(--bg-1);
+    border: 3px solid var(--frame);
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .stat-label {
+    font-family: "Press Start 2P", monospace;
+    font-size: 8px;
+    color: var(--ink-dim);
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+  .stat-value {
+    font-family: "Press Start 2P", monospace;
+    font-size: 18px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.6);
+  }
+
+  .progress-wrap {
+    background: var(--bg-1);
+    border: 3px solid var(--frame);
+    padding: 8px 10px;
+  }
+  .progress-label {
+    font-family: "Press Start 2P", monospace;
+    font-size: 9px;
+    color: var(--ink-dim);
+    margin-bottom: 6px;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+  .progress-track {
+    height: 14px;
+    background: var(--frame-dark);
+    border: 2px solid var(--frame);
+    display: flex;
+    overflow: hidden;
+  }
+  .progress-fill.won { background: var(--won); }
+  .progress-fill.lost { background: var(--lost); }
+
+  .bingo-banner {
+    background: var(--bg-1);
+    border: 3px solid var(--frame);
+    padding: 10px;
+    text-align: center;
+    font-family: "Press Start 2P", monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: 1px;
+  }
+  .bingo-banner.active {
+    background: linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24);
+    background-size: 200% 100%;
+    border-color: var(--gold);
+    color: #1a1a1a;
+    text-shadow: none;
+    animation: bingoBg 1.4s linear infinite, bingoShake 0.4s ease-in-out infinite alternate;
+    box-shadow: 0 0 24px rgba(251, 191, 36, 0.8);
+  }
+  @keyframes bingoBg {
+    0% { background-position: 0% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes bingoShake {
+    from { transform: translate(-1px, 0); }
+    to { transform: translate(1px, 0); }
+  }
+
+  .reset-btn {
+    background: var(--bg-1);
+    border: 3px solid var(--frame);
+    padding: 10px;
+    font-family: "Press Start 2P", monospace;
+    font-size: 10px;
+    color: var(--ink-dim);
+    letter-spacing: 1px;
+    transition: all 0.1s;
+  }
+  .reset-btn:hover {
+    background: var(--lost-bg);
+    color: var(--lost);
+    border-color: var(--lost);
+  }
+
+  /* ---------- BINGO GRID ---------- */
+  .grid-wrap {
+    background: var(--bg-1);
+    border: 4px solid var(--frame);
+    box-shadow:
+      0 0 0 4px var(--frame-dark),
+      6px 6px 0 4px rgba(0,0,0,0.5);
+    padding: 16px;
+  }
+  .grid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding: 0 4px;
+  }
+  .grid-header > span:first-child {
+    font-family: "Press Start 2P", monospace;
+    font-size: 14px;
+    color: var(--accent);
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.6);
+  }
+  .hint {
+    font-size: 18px;
+    color: var(--ink-dim);
+  }
+  .bingo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 1fr;
+    gap: 8px;
+  }
+  .bingo-cell {
+    background: var(--pending-bg);
+    border: 3px solid var(--frame);
+    padding: 10px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.06s;
+    min-height: 150px;
+  }
+  .bingo-cell:hover { transform: scale(1.02); z-index: 2; }
+  .bingo-cell:active { transform: scale(0.98); }
+  .cell-text {
+    font-family: "VT323", monospace;
+    font-size: 19px;
+    line-height: 1.05;
+    color: var(--ink);
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.7);
+    word-break: break-word;
+    hyphens: auto;
+    max-height: 100%;
+  }
+  .cell-stamp {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Press Start 2P", monospace;
+    font-size: 90px;
+    color: rgba(255,255,255,0.18);
+    pointer-events: none;
+    text-shadow: 4px 4px 0 rgba(0,0,0,0.4);
+  }
+
+  .bingo-cell.won {
+    background: var(--won-bg);
+    border-color: var(--won);
+    box-shadow: inset 0 0 12px rgba(124, 255, 178, 0.3);
+  }
+  .bingo-cell.won .cell-text { color: var(--won); }
+  .bingo-cell.won .cell-stamp { color: rgba(124, 255, 178, 0.35); }
+
+  .bingo-cell.lost {
+    background: var(--lost-bg);
+    border-color: var(--lost);
+    box-shadow: inset 0 0 12px rgba(255, 107, 107, 0.3);
+  }
+  .bingo-cell.lost .cell-text {
+    color: var(--lost);
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    text-decoration-color: rgba(255, 107, 107, 0.6);
+  }
+  .bingo-cell.lost .cell-stamp { color: rgba(255, 107, 107, 0.35); }
+
+  .bingo-cell.bingo-line {
+    animation: bingoCellGlow 1.2s ease-in-out infinite alternate;
+  }
+  @keyframes bingoCellGlow {
+    from { box-shadow: inset 0 0 12px rgba(124, 255, 178, 0.3), 0 0 8px rgba(251, 191, 36, 0.4); }
+    to { box-shadow: inset 0 0 18px rgba(251, 191, 36, 0.6), 0 0 24px var(--gold); }
+  }
+
+  /* ---------- TWEAKS PANEL ---------- */
+  .tweaks-panel {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 360px;
+    background: var(--bg-1);
+    border: 4px solid var(--gold);
+    box-shadow:
+      0 0 0 4px var(--frame-dark),
+      0 0 30px rgba(251, 191, 36, 0.4);
+    z-index: 100;
+  }
+  .tweaks-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--gold);
+    color: #1a1a1a;
+    font-family: "Press Start 2P", monospace;
+    font-size: 11px;
+    padding: 10px 14px;
+  }
+  .tweaks-head button {
+    font-size: 20px;
+    line-height: 1;
+    padding: 0 4px;
+  }
+  .tweaks-body { padding: 14px; }
+  .tweaks-note {
+    font-size: 18px;
+    color: var(--ink-dim);
+    margin-bottom: 12px;
+  }
+  .tweak-row {
+    margin-bottom: 14px;
+    border-bottom: 2px dashed var(--frame);
+    padding-bottom: 12px;
+  }
+  .tweak-row:last-child { border: none; padding-bottom: 0; margin-bottom: 0; }
+  .tweak-label {
+    font-family: "Press Start 2P", monospace;
+    font-size: 11px;
+    margin-bottom: 8px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.6);
+  }
+  .tweak-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .tweak-thumb {
+    aspect-ratio: 1 / 1;
+    background: #000;
+    border: 2px solid var(--frame);
+    overflow: hidden;
+    padding: 0;
+  }
+  .tweak-thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+  .tweak-thumb.active {
+    border-color: var(--gold);
+    box-shadow: 0 0 8px var(--gold);
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width: 900px) {
+    .topbar { grid-template-columns: 1fr; }
+    .card-stage { grid-template-columns: 1fr; }
+    .character-select { grid-template-columns: repeat(2, 1fr); }
+    .title-glow { font-size: 24px; }
+    .cell-text { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="bingo-data.js"></script>
+<script type="text/babel" src="app.jsx"></script>
+
+</body>
+</html>
