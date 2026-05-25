@@ -139,7 +139,7 @@ function App() {
 
   useEffect(() => { savePlayers(players); }, [players]);
 
-  // Tweaks toolbar integration
+  // Tweaks toolbar integration (for Claude preview environment)
   useEffect(() => {
     const onMsg = (e) => {
       if (e.data?.type === "__activate_edit_mode") setTweaksOpen(true);
@@ -186,6 +186,13 @@ function App() {
 
   const reassignCharacter = (playerId, character) => {
     setPlayers(prev => prev.map(p => p.id === playerId ? { ...p, character } : p));
+  };
+
+  const resetCharacters = () => {
+    setPlayers(prev => prev.map(p => {
+      const def = window.BINGO_PLAYERS.find(d => d.id === p.id);
+      return def ? { ...p, character: def.character } : p;
+    }));
   };
 
   return (
@@ -267,17 +274,26 @@ function App() {
         <TweaksPanel
           players={players}
           onAssign={reassignCharacter}
+          onResetCharacters={resetCharacters}
           onClose={() => {
             setTweaksOpen(false);
             window.parent.postMessage({ type: "__edit_mode_dismissed" }, "*");
           }}
         />
       )}
+
+      <button
+        className="settings-fab"
+        onClick={() => setTweaksOpen(true)}
+        title="Nastavení postaviček"
+      >
+        ⚙
+      </button>
     </div>
   );
 }
 
-function TweaksPanel({ players, onAssign, onClose }) {
+function TweaksPanel({ players, onAssign, onResetCharacters, onClose }) {
   const portraits = [
     { id: "char-mustache-glasses", label: "Knír + brýle" },
     { id: "char-dreads", label: "Dredy + červená" },
@@ -287,7 +303,7 @@ function TweaksPanel({ players, onAssign, onClose }) {
   return (
     <div className="tweaks-panel">
       <div className="tweaks-head">
-        <span>★ TWEAKS</span>
+        <span>★ NASTAVENÍ</span>
         <button onClick={onClose}>×</button>
       </div>
       <div className="tweaks-body">
@@ -309,6 +325,9 @@ function TweaksPanel({ players, onAssign, onClose }) {
             </div>
           </div>
         ))}
+        <button className="tweaks-reset-btn" onClick={onResetCharacters}>
+          ↺ OBNOVIT VÝCHOZÍ
+        </button>
       </div>
     </div>
   );
