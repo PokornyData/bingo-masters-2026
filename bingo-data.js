@@ -33,7 +33,7 @@ window.BINGO_PLAYERS = [
   {
     id: "poky",
     name: "Poky",
-    character: "char-beanie-cards",
+    character: "char-beard-carrier",
     accent: "#86efac", // green
     cells: [
       { text: "ORBÁN BUDE NA KONCI ROKU STÁLE PREMIÉREM", state: 2 },
@@ -87,7 +87,7 @@ window.BINGO_PLAYERS = [
   {
     id: "dejv",
     name: "Dejv",
-    character: "char-beard-carrier",
+    character: "char-beanie-cards",
     accent: "#fcd34d", // amber
     cells: [
       { text: "LITVÍNOV PŮJDE DO BARÁŽE, ALE UDRŽÍ SE V EXTRALIZE", state: 1 },
