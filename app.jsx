@@ -97,7 +97,7 @@ function PlayerPortrait({ player, selected, rank, onSelect }) {
       <div className="portrait-rank">#{rank}</div>
       <div className="portrait-frame">
         <img
-          src={`characters/${player.character}.png`}
+          src={`characters/${player.character}.jpg`}
           alt={player.name}
           draggable={false}
         />
@@ -223,7 +223,7 @@ function App() {
       <main className="card-stage" style={{ "--accent": active.accent }}>
         <aside className="player-side">
           <div className="big-portrait">
-            <img src={`characters/${active.character}.png`} alt={active.name} draggable={false} />
+            <img src={`characters/${active.character}.jpg`} alt={active.name} draggable={false} />
             <div className="player-banner">{active.name}</div>
           </div>
           <div className="stats-grid">
@@ -303,7 +303,7 @@ function TweaksPanel({ players, onAssign, onClose }) {
                   onClick={() => onAssign(p.id, pr.id)}
                   title={pr.label}
                 >
-                  <img src={`characters/${pr.id}.png`} alt={pr.label} draggable={false} />
+                  <img src={`characters/${pr.id}.jpg`} alt={pr.label} draggable={false} />
                 </button>
               ))}
             </div>
