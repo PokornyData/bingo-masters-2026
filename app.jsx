@@ -132,6 +132,61 @@ function BingoCell({ cell, index, onCycle, inBingo }) {
   );
 }
 
+function MusicControl() {
+  const [playing, setPlaying] = useState(false);
+  const [volume, setVolume] = useState(window.chiptune?.getVolume?.() ?? 0.35);
+  const [open, setOpen] = useState(false);
+
+  // On first user interaction anywhere, attempt to auto-resume if user had it on
+  useEffect(() => {
+    const tryResume = () => {
+      if (window.chiptune?.wasPlaying?.() && !window.chiptune.isPlaying()) {
+        window.chiptune.start();
+        setPlaying(true);
+      }
+      window.removeEventListener("pointerdown", tryResume);
+      window.removeEventListener("keydown", tryResume);
+    };
+    window.addEventListener("pointerdown", tryResume);
+    window.addEventListener("keydown", tryResume);
+    return () => {
+      window.removeEventListener("pointerdown", tryResume);
+      window.removeEventListener("keydown", tryResume);
+    };
+  }, []);
+
+  const toggle = () => {
+    const isOn = window.chiptune.toggle();
+    setPlaying(isOn);
+  };
+  const onVol = (e) => {
+    const v = parseFloat(e.target.value);
+    setVolume(v);
+    window.chiptune.setVolume(v);
+  };
+
+  return (
+    <div className={"music-control" + (open ? " open" : "")}>
+      <button
+        className={"music-btn" + (playing ? " playing" : "")}
+        onClick={toggle}
+        title={playing ? "Vypnout hudbu" : "Zapnout hudbu"}
+      >
+        {playing ? "♪" : "♪"}
+        {playing && <span className="eq"><i></i><i></i><i></i></span>}
+      </button>
+      <button className="music-expand" onClick={() => setOpen(o => !o)} title="Hlasitost">
+        ⏵
+      </button>
+      {open && (
+        <div className="music-slider">
+          <input type="range" min="0" max="1" step="0.01" value={volume} onChange={onVol} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const [players, setPlayers] = useState(loadInitial);
   const [activeId, setActiveId] = useState(players[0].id);
@@ -289,6 +344,8 @@ function App() {
       >
         ⚙
       </button>
+
+      <MusicControl />
     </div>
   );
 }
